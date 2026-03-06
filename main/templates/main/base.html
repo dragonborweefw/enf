@@ -117,8 +117,8 @@
         <div class="p-6">
             <div class="flex justify-between items-center mb-8">
                 <h2 class="text-lg font-bold tracking-tight text-left">
-                    ПЎЗАТЫЕ ДЕТИ <br>
-                    С ОЖИРЕНИЕМ
+                    ENFANTS RICHES <br>
+                    DÉPRIMÉS
                 </h2>
                 <button id="closeMenu" class="hamburger active">
                     <span></span>
@@ -148,9 +148,9 @@
             
             <div class="mt-8 space-y-4">
                 <a href="#" class="block text-sm font-medium text-gray-900 hover:text-gray-700 py-2">SEARCH</a>
-                <a href="#"
-                hx-get="#"
-                hx-target="#main-content"
+                <a href="#" 
+                hx-get="#" 
+                hx-target="#main-content" 
                 hx-push-url="true"
                 class="text-sm font-medium text-gray-900 uppercase hover:text-gray-600">
                     ACCOUNT
@@ -178,8 +178,8 @@
                        hx-target="#main-content" 
                        hx-push-url="true">
                         <h1 class="text-sm sm:text-lg font-bold tracking-tight text-left">
-                            ПЎЗАТЫЕ ДЕТИ <br>
-                            С ОЖИРЁНИЕМ
+                            ENFANTS RICHES <br>
+                            DÉPRIMÉS
                         </h1>
                     </a>
                 </div>
@@ -208,9 +208,9 @@
                             SEARCH
                         </button>
                     </div>
-                    <a href="#"
-                    hx-get="#"
-                    hx-target="#main-content"
+                    <a href="#" 
+                    hx-get="#" 
+                    hx-target="#main-content" 
                     hx-push-url="true"
                     class="text-sm font-medium text-gray-900 uppercase hover:text-gray-600">
                         ACCOUNT
@@ -237,7 +237,7 @@
         <main class="mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div class="text-center py-20">
                 <h2 class="text-4xl font-bold tracking-tight text-gray-900 mb-4">
-                    ПЎЗАТЫЕ ДЁТИ ОЖИРЁНИЕМ
+                    ENFANTS RICHES DÉPRIMÉS
                 </h2>
                 <p class="text-lg text-gray-600 mb-8">
                     Select a category to browse our collection
@@ -304,9 +304,29 @@
                 if (mobileCartHeader) mobileCartHeader.textContent = cartText;
             }
             
-
-
+            function updateCartCount() {
+                fetch('{% url "cart:cart_count" %}')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateHeaderCartCount(data.total_items);
+                    });
+            }
     
+            function openCart() {
+                htmx.ajax('GET', '{% url "cart:cart_modal" %}', {
+                    target: '#cart-container',
+                    swap: 'innerHTML'
+                });
+            }
+    
+            [desktopCart, mobileCart, mobileCartHeader].forEach(cartLink => {
+                if (cartLink) {
+                    cartLink.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        openCart();
+                    });
+                }
+            });
     
             // Close mobile menu on window resize
             window.addEventListener('resize', function() {
@@ -333,11 +353,11 @@
             }
             
             // Listen for cart updates
-            // document.addEventListener('cartUpdated', function(e) {
-            //     if (e.detail && e.detail.total_items !== undefined) {
-            //         updateHeaderCartCount(e.detail.total_items);
-            //     }
-            // });
+            document.addEventListener('cartUpdated', function(e) {
+                if (e.detail && e.detail.total_items !== undefined) {
+                    updateHeaderCartCount(e.detail.total_items);
+                }
+            });
         });
         
         // Global function to update cart count
