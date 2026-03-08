@@ -1,0 +1,47 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ENFANTS RICHES DÉPRIMÉS{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .dotted-input {
+            border: none;
+            border-bottom: 2px dotted #d1d5db;
+            background: transparent;
+            outline: none;
+            transition: border-color 0.3s ease;
+        }
+        .dotted-input:focus {
+            border-bottom-color: #374151;
+        }
+        .dotted-input::placeholder {
+            color: #6b7280;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="bg-white">
+    <div id="main-content">
+        {% block content %}{% endblock %}
+    </div>
+    <script>
+        document.querySelectorAll('.dotted-input').forEach(input => {
+            input.addEventListener('focus', function() {
+                this.parentElement.classList.add('focused');
+            });
+            input.addEventListener('blur', function() {
+                this.parentElement.classList.remove('focused');
+            });
+        });
+    </script>
+</body>
+</html>

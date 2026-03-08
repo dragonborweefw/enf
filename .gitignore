@@ -1,12 +1,17 @@
 venv/
 .pylintrc
 __pycache__/
+node_modules/
 
 .vscode
 .idea
 .env
 django.log
 security.log
+package-lock.json
+package.json
+style.css
+tailwind.config.js
 
 db.sqlite3
 media/

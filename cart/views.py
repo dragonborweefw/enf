@@ -88,9 +88,6 @@ class AddToCartView(CartMixin, View):
             
         cart_item = cart.add_product(product, product_size, quantity)
 
-        request.session['cart_id'] = cart.id
-        request.session.modified = True
-
         if request.headers.get('HX-Request'):
             return redirect('cart:cart_modal')
         else:
@@ -110,10 +107,7 @@ class UpdateCartItemView(CartMixin, View):
 
         quantity = int(request.POST.get('quantity', 1))
 
-        if quantity < 0:
-            return JsonResponse({'error': 'Invalid quantity'}, status=400)
-        
-        if quantity == 0:
+        if quantity <= 0:
             cart_item.delete()
         else:
             if quantity > cart_item.product_size.stock:
@@ -123,9 +117,6 @@ class UpdateCartItemView(CartMixin, View):
             
             cart_item.quantity = quantity
             cart_item.save()
-
-        request.session['cart_id'] = cart.id
-        request.session.modified = True
 
         context = {
             'cart': cart,
@@ -144,9 +135,6 @@ class RemoveCartItemView(CartMixin, View):
         try:
             cart_item = cart.items.get(id=item_id)
             cart_item.delete()
-
-            request.session['cart_id'] = cart.id
-            request.session.modified = True
 
             context = {
                 'cart': cart,
@@ -173,9 +161,6 @@ class ClearCartView(CartMixin, View):
     def post(self, request):
         cart = self.get_cart(request)
         cart.clear()
-
-        request.session['cart_id'] = cart.id
-        request.session.modified = True
 
         if request.headers.get('HX-Request'):
             return TemplateResponse(request, 'cart/cart_empty.html', {

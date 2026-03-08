@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'main',
     'cart',
+    'users'
 ]
 
 MIDDLEWARE = [
@@ -53,7 +54,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    
+
     'cart.middleware.CartMiddleware'
 ]
 
@@ -129,3 +130,5 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 SESSION_COOKIE_AGE = 86_400
 SESSION_SAVE_COOKIE_REQUEST = True
+
+AUTH_USER_MODEL = 'users.CustomUser'
