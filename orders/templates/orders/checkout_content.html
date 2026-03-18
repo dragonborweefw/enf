@@ -205,50 +205,26 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const paymentButtons = document.querySelectorAll('.payment-button');
         const paymentProviderInput = document.getElementById('payment_provider');
         const form = document.getElementById('order-form');
 
-        paymentButtons.forEach(button => {
-            button.addEventListener('click', function(e) {
-                const provider = this.getAttribute('data-payment-provider') || this.getAttribute('onclick').match(/'([^']+)'/)[1];
-                paymentProviderInput.value = provider;
-                console.log('Payment provider set to:', provider);
-            });
-        });
-
         form.addEventListener('submit', function(e) {
-            console.log('Form submitting with payment provider:', paymentProviderInput.value);
-
-            // Проверка обязательных полей
             const requiredFields = ['email', 'first_name', 'last_name', 'address1', 'city', 'country', 'phone'];
-            let isValid = true;
-
-            requiredFields.forEach(fieldName => {
-                const field = document.querySelector(`[name="${fieldName}"]`);
-                if (field && !field.value.trim()) {
-                    console.error(`Required field ${fieldName} is empty`);
-                    isValid = false;
-                }
+            const isEmpty = requiredFields.some(name => {
+                const field = document.querySelector(`[name="${name}"]`);
+                return field && !field.value.trim();
             });
 
-            if (!isValid) {
+            if (isEmpty) {
                 e.preventDefault();
                 alert('Please fill in all required fields');
-                return false;
+                return;
             }
 
-            // Проверка значения payment_provider
             if (!['stripe', 'heleket'].includes(paymentProviderInput.value)) {
                 e.preventDefault();
-                console.error('Invalid payment provider:', paymentProviderInput.value);
-                alert('Please select a valid payment provider');
-                return false;
+                alert('Please select a payment method');
             }
-        });
-
-        form.addEventListener('htmx:beforeRequest', function(e) {
-            console.log('HTMX request starting with payment provider:', paymentProviderInput.value);
         });
     });
 </script>

@@ -11,10 +11,7 @@ import json
 
 
 class CartMixin:
-    def get_cart(self, request):
-        if hasattr(request, 'cart'):
-            return request.cart
-    
+    def get_cart(self, request):    
         if not request.session.session_key:
             request.session.create()
 
@@ -25,18 +22,26 @@ class CartMixin:
         request.session['cart_id'] = cart.id
         request.session.modified = True
         return cart
-    
+
+    def get_cart_context(self, cart):
+        cart_items = list(
+            cart.items.select_related(
+                'product',
+                'product_size__size'
+            ).order_by('-added_at')
+        )
+        subtotal = cart.calculate_subtotal(cart_items)
+        return {
+            'cart': cart,
+            'cart_items': cart_items,
+            'subtotal': subtotal,
+        }
+
 
 class CartModalView(CartMixin, View):
     def get(self, request):
         cart = self.get_cart(request)
-        context = {
-            'cart': cart,
-            'cart_items': cart.items.select_related(
-                'product',
-                'product_size__size'
-            ).order_by('-added_at')
-        }
+        context = self.get_cart_context(cart)
         return TemplateResponse(request, 'cart/cart_modal.html', context)
 
 
@@ -118,14 +123,8 @@ class UpdateCartItemView(CartMixin, View):
             cart_item.quantity = quantity
             cart_item.save()
 
-        context = {
-            'cart': cart,
-            'cart_items': cart.items.select_related(
-                'product',
-                'product_size__size',
-            ).order_by('-added_at')
-        }
-        return TemplateResponse(request, 'cart/cart_modal.html', context)
+        context = self.get_cart_context(cart)
+        return TemplateResponse(request, 'cart/includes/cart_items_partial.html', context)
     
 
 class RemoveCartItemView(CartMixin, View):
@@ -136,14 +135,8 @@ class RemoveCartItemView(CartMixin, View):
             cart_item = cart.items.get(id=item_id)
             cart_item.delete()
 
-            context = {
-                'cart': cart,
-                'cart_items': cart.items.select_related(
-                    'product',
-                    'product_size__size',
-                ).order_by('-added_at')
-            }
-            return TemplateResponse(request, 'cart/cart_modal.html', context)
+            context = self.get_cart_context(cart)
+            return TemplateResponse(request, 'cart/includes/cart_items_partial.html', context)
         except CartItem.DoesNotExist:
             return JsonResponse({'error': 'Item not found'}, status=400)
         
@@ -151,9 +144,10 @@ class RemoveCartItemView(CartMixin, View):
 class CartCountView(CartMixin, View):
     def get(self, request):
         cart = self.get_cart(request)
+        cart_items = list(cart.items.select_related('product').all())
         return JsonResponse({
-            'total_items': cart.total_items,
-            'subtotal': float(cart.subtotal)
+            'total_items': sum(item.quantity for item in cart_items),
+            'subtotal': float(cart.calculate_subtotal(cart_items))
         })
     
 
@@ -175,11 +169,5 @@ class ClearCartView(CartMixin, View):
 class CartSummaryView(CartMixin, View):
     def get(self, request):
         cart = self.get_cart(request)
-        context = {
-            'cart': cart,
-            'cart_items': cart.items.select_related(
-                'product',
-                'product_size__size'
-            ).order_by('-added_at')
-        }
+        context = self.get_cart_context(cart)
         return TemplateResponse(request, 'cart/cart_summary.html', context)

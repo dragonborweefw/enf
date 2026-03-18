@@ -1,0 +1,30 @@
+{% comment %}
+Partial returned by update_item and remove_item.
+- Replaces only #cart-items (preserves scroll position inside the modal)
+- Updates #cart-summary and #cart-count via hx-swap-oob (out-of-band)
+{% endcomment %}
+
+<div id="cart-items" class="space-y-8">
+    {% for item in cart_items %}
+        {% include 'cart/cart_item.html' %}
+    {% empty %}
+        <div class="text-center py-20 text-gray-500">
+            <p class="text-lg mb-4">Your cart is empty</p>
+            <button onclick="closeCart()" class="text-sm underline">Continue shopping</button>
+        </div>
+    {% endfor %}
+</div>
+
+{# Out-of-band: update the summary footer without touching the items list #}
+<div id="cart-summary" hx-swap-oob="true" class="border-t p-6">
+    {% if cart_items %}
+        {% include 'cart/cart_summary.html' %}
+    {% else %}
+        <div class="text-center text-gray-500">
+            <p>Your cart is empty</p>
+        </div>
+    {% endif %}
+</div>
+
+{# Out-of-band: update the CART (N) counter in the modal header #}
+<span id="cart-count" hx-swap-oob="true">{{ cart.total_items }}</span>

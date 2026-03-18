@@ -19,6 +19,12 @@ class Cart(models.Model):
     @property
     def subtotal(self):
         return sum(item.total_price for item in self.items.all())
+
+    def calculate_subtotal(self, prefetched_items):
+        return sum(
+            Decimal(str(item.product.price)) * item.quantity
+            for item in prefetched_items
+        )
     
     def add_product(self, product, product_size, quantity=1):
         cart_item,created = CartItem.objects.get_or_create(
@@ -76,4 +82,3 @@ class CartItem(models.Model):
     @property
     def total_price(self):
         return Decimal(str(self.product.price)) * self.quantity
-    

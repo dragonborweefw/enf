@@ -7,10 +7,12 @@
     <title>{% block title %}ENFANTS RICHES DÉPRIMÉS{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
+        html {
+            scrollbar-gutter: stable;
+        }
         body {
             font-family: 'Inter', sans-serif;
         }
@@ -319,33 +321,10 @@
             closeMenu.addEventListener('click', closeMobileMenu);
             overlay.addEventListener('click', closeMobileMenu);
 
-            // Close mobile menu after navigation
-            document.addEventListener('htmx:afterRequest', function() {
-                closeMobileMenu();
-            });
-
             // Cart functionality
             const desktopCart = document.getElementById('desktopCart');
             const mobileCart = document.getElementById('mobileCart');
             const mobileCartHeader = document.getElementById('mobileCartHeader');
-
-            // Get initial cart count
-            updateCartCount();
-
-            function updateHeaderCartCount(count) {
-                const cartText = `CART (${count})`;
-                if (desktopCart) desktopCart.textContent = cartText;
-                if (mobileCart) mobileCart.textContent = cartText;
-                if (mobileCartHeader) mobileCartHeader.textContent = cartText;
-            }
-
-            function updateCartCount() {
-                fetch('{% url "cart:cart_count" %}')
-                    .then(response => response.json())
-                    .then(data => {
-                        updateHeaderCartCount(data.total_items);
-                    });
-            }
 
             function loadCartModal() {
                 htmx.ajax('GET', '{% url "cart:cart_modal" %}', {
@@ -363,13 +342,8 @@
                 }
             });
 
-            // Close mobile menu on window resize
-            document.addEventListener('htmx:afterRequest', function(e) {
+            document.addEventListener('htmx:afterRequest', function() {
                 closeMobileMenu();
-                // обновляем счётчик после любого запроса к корзине
-                if (e.detail.pathInfo && e.detail.pathInfo.requestPath.includes('cart')) {
-                    updateCartCount();
-                }
             });
 
             // Update active navigation links after HTMX requests
@@ -389,55 +363,18 @@
                 });
             }
 
-            // Listen for cart updates
-            document.addEventListener('cartUpdated', function(e) {
-                if (e.detail && e.detail.total_items !== undefined) {
-                    updateHeaderCartCount(e.detail.total_items);
-                }
-            });
-
-            // Перед заменой #cart-modal — сразу отключаем transition и фиксируем layout
-            document.addEventListener('htmx:beforeSwap', function(evt) {
-                if (evt.detail.target.id === 'cart-modal') {
-                    const modal = document.getElementById('cart-modal');
-                    if (modal) modal.style.transition = 'none';
-                    // Держим overflow/padding чтобы скроллбар не мелькал
-                    document.body.style.overflow = 'hidden';
-                }
-            });
-
+            // Открытие корзины — HTMX грузит полный фрагмент в #cart-container
             document.addEventListener('htmx:afterSettle', function(evt) {
-                const eltId = evt.detail.elt.id;
-
-                // Первое открытие корзины — HTMX грузит фрагмент в #cart-container
-                if (eltId === 'cart-container') {
+                if (evt.detail.elt.id === 'cart-container') {
                     const modal = document.getElementById('cart-modal');
                     const overlay = document.getElementById('cart-overlay');
                     if (modal && overlay) {
                         requestAnimationFrame(() => {
                             requestAnimationFrame(() => {
-                                const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
-                                document.body.style.paddingRight = `${scrollbarWidth}px`;
                                 document.body.style.overflow = 'hidden';
                                 modal.classList.add('open');
                                 overlay.classList.add('open');
                             });
-                        });
-                    }
-                }
-
-                // Обновление количества/удаление — HTMX делает outerHTML swap #cart-modal
-                // Новый элемент появляется без .open — нужно вернуть его мгновенно без анимации
-                if (eltId === 'cart-modal') {
-                    const modal = document.getElementById('cart-modal');
-                    const overlay = document.getElementById('cart-overlay');
-                    if (modal && overlay) {
-                        modal.style.transition = 'none';
-                        modal.classList.add('open');
-                        overlay.classList.add('open');
-                        // Возвращаем transition обратно после следующего frame
-                        requestAnimationFrame(() => {
-                            modal.style.transition = '';
                         });
                     }
                 }
@@ -465,7 +402,6 @@
                 overlay.classList.remove('open');
                 setTimeout(() => {
                     document.body.style.overflow = '';
-                    document.body.style.paddingRight = '';
                     const container = document.getElementById('cart-container');
                     if (container) container.innerHTML = '';
                 }, 400);
